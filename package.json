@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "",
   "private": true,
-  "author": "",
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
+  "repository": "github:mgcrea/fastify-trpc-test-plugin",
   "license": "MIT",
   "type": "module",
   "exports": {
