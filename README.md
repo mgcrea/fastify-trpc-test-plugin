@@ -40,6 +40,8 @@ pnpm add @mgcrea/fastify-trpc-test-plugin
 
 ### Usage
 
+- First you need to register the plugin and overload the `FastifyInstance` interface with your `AppRouter` type.
+
 ```ts
 import {
   fastifyTrpcTest,
@@ -80,6 +82,26 @@ declare module "fastify" {
     ) => Promise<LightMyRequestResponse>;
   }
 }
+```
+
+- Then you can use the added helpers in your tests with working type safety / auto-completion.
+
+```ts
+test("push patch with replace operation", async () => {
+  const res = await app.injectTrpcMutation("imageDetection.pushImageDetectionPatches", {
+    input: {
+      sid: SEED_IMAGE_DETECTIONS_SIDS[1],
+      patches: [
+        {
+          op: "replace",
+          path: "/0/code/value",
+          value: "466362",
+        },
+      ],
+    },
+  });
+  expect(res.statusCode).toBe(200);
+});
 ```
 
 ## Authors
