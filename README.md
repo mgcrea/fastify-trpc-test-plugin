@@ -90,7 +90,7 @@ declare module "fastify" {
 test("push patch with replace operation", async () => {
   const res = await app.injectTrpcMutation("imageDetection.pushImageDetectionPatches", {
     input: {
-      sid: SEED_IMAGE_DETECTIONS_SIDS[1],
+      id: 1,
       patches: [
         {
           op: "replace",
