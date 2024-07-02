@@ -1,3 +1,2 @@
 export * from "./plugin";
-
-export type { AppRouter } from "./types";
+export * from "./types";

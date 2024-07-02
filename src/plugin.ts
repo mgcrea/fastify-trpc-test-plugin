@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { AnyRouter } from "@trpc/server";
 
 import type { FastifyPluginAsync, InjectOptions, LightMyRequestResponse } from "fastify";
 import fastifyPlugin from "fastify-plugin";
@@ -8,7 +9,7 @@ import {
   unwrapBatchTrpcResponse,
   unwrapTrpcResponse,
 } from "src/utils";
-import type { AppRouter, inferProcedureInput } from "./types";
+import type { UnknownProcedures, inferProcedureInput, inferRouterProcedures } from "./types";
 
 export type FastifyTrpcTestPluginOptions = {
   defaultHeaders?: Record<string, string>;
@@ -16,11 +17,11 @@ export type FastifyTrpcTestPluginOptions = {
   prefix?: string;
 };
 
-type InjectTrpcOptions<T extends AppRouter["procedures"]> = Omit<
+export type InjectTrpcOptions<R extends AnyRouter, P extends UnknownProcedures> = Omit<
   InjectOptions,
   "method" | "url" | "body"
 > & {
-  input?: inferProcedureInput<T>;
+  input?: inferProcedureInput<R, P>;
 };
 
 const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = async (
@@ -29,9 +30,9 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
 ): Promise<void> => {
   const { prefix = "", defaultHeaders = { accept: "application/json" }, transformer } = options;
 
-  const injectTrpcQuery = async <T extends AppRouter["procedures"]>(
-    procedure: T,
-    opts: InjectTrpcOptions<T> = {},
+  const injectTrpcQuery = async <R extends AnyRouter, P extends inferRouterProcedures<R>>(
+    procedure: P,
+    opts: InjectTrpcOptions<R, P> = {},
   ): Promise<LightMyRequestResponse> => {
     const { input: json, headers: optionsHeaders, ...rest } = opts;
 
@@ -57,9 +58,9 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
   };
   fastify.decorate("injectTrpcQuery", injectTrpcQuery);
 
-  const injectTrpcBatchQuery = async <T extends AppRouter["procedures"]>(
-    procedure: T,
-    opts: InjectTrpcOptions<T>,
+  const injectTrpcBatchQuery = async <R extends AnyRouter, P extends inferRouterProcedures<R>>(
+    procedure: P,
+    opts: InjectTrpcOptions<R, P> = {},
   ): Promise<LightMyRequestResponse> => {
     const { input: json, headers: optionsHeaders, ...rest } = opts;
 
@@ -85,9 +86,9 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
   };
   fastify.decorate("injectTrpcBatchQuery", injectTrpcBatchQuery);
 
-  const injectTrpcMutation = async <T extends AppRouter["procedures"]>(
-    procedure: T,
-    opts: InjectTrpcOptions<T>,
+  const injectTrpcMutation = async <R extends AnyRouter, P extends inferRouterProcedures<R>>(
+    procedure: P,
+    opts: InjectTrpcOptions<R, P> = {},
   ): Promise<LightMyRequestResponse> => {
     const { input: json, headers: optionsHeaders, ...rest } = opts;
 
@@ -116,19 +117,19 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
 
 export const fastifyTrpcTest = fastifyPlugin(fastifyTrpcTestPlugin);
 
-declare module "fastify" {
-  interface FastifyInstance {
-    injectTrpcQuery: <T extends AppRouter["procedures"]>(
-      procedure: T,
-      opts?: InjectTrpcOptions<T>,
-    ) => Promise<LightMyRequestResponse>;
-    injectTrpcBatchQuery: <T extends AppRouter["procedures"]>(
-      procedure: T,
-      opts: InjectTrpcOptions<T>,
-    ) => Promise<LightMyRequestResponse>;
-    injectTrpcMutation: <T extends AppRouter["procedures"]>(
-      procedure: T,
-      opts: InjectTrpcOptions<T>,
-    ) => Promise<LightMyRequestResponse>;
-  }
-}
+// declare module "fastify" {
+//   interface FastifyInstance {
+//     injectTrpcQuery: <R extends AnyRouter, P extends inferRouterProcedures<R>>(
+//       procedure: P,
+//       opts?: InjectTrpcOptions<R, P>,
+//     ) => Promise<LightMyRequestResponse>;
+//     injectTrpcBatchQuery: <R extends AnyRouter, P extends inferRouterProcedures<R>>(
+//       procedure: P,
+//       opts: InjectTrpcOptions<R, P>,
+//     ) => Promise<LightMyRequestResponse>;
+//     injectTrpcMutation: <R extends AnyRouter, P extends inferRouterProcedures<R>>(
+//       procedure: P,
+//       opts: InjectTrpcOptions<R, P>,
+//     ) => Promise<LightMyRequestResponse>;
+//   }
+// }
