@@ -13,6 +13,7 @@ import type { UnknownProcedures, inferProcedureInput, inferRouterProcedures } fr
 export type FastifyTrpcTestPluginOptions = {
   defaultHeaders?: Record<string, string>;
   transformer?: {
+    serialize: (data: any) => string;
     stringify: (data: any) => string;
     parse: (data: string) => any;
   };
@@ -107,7 +108,7 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
       method: "POST",
       url,
       headers: exportHeaders(mergeHeaders(headers, optionsHeaders)),
-      body: transformer ? transformer.stringify({ 0: input }) : JSON.stringify({ 0: input }),
+      body: { 0: transformer ? transformer.serialize(input) : { json: JSON.stringify(input) } },
     });
 
     const { json: original } = res;
