@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AnyRouter } from "@trpc/server";
-
 import type { FastifyPluginAsync, InjectOptions, LightMyRequestResponse } from "fastify";
 import fastifyPlugin from "fastify-plugin";
 import {
@@ -13,7 +12,10 @@ import type { UnknownProcedures, inferProcedureInput, inferRouterProcedures } fr
 
 export type FastifyTrpcTestPluginOptions = {
   defaultHeaders?: Record<string, string>;
-  transformer?: any;
+  transformer?: {
+    stringify: (data: any) => string;
+    parse: (data: string) => any;
+  };
   prefix?: string;
 };
 
@@ -34,11 +36,15 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
     procedure: P,
     opts: InjectTrpcOptions<R, P> = {},
   ): Promise<LightMyRequestResponse> => {
-    const { input: json, headers: optionsHeaders, ...rest } = opts;
+    const { input, headers: optionsHeaders, ...rest } = opts;
 
     const params = new URLSearchParams();
-    if (json) {
-      params.set("input", JSON.stringify({ json }));
+    if (input) {
+      // Serialize with transformer if provided, otherwise use JSON
+      params.set(
+        "input",
+        transformer ? transformer.stringify({ json: input }) : JSON.stringify({ json: input }),
+      );
     }
     const headers = new Headers(Object.entries(defaultHeaders));
     const url = `${prefix}/${procedure}?${params.toString()}`;
@@ -50,10 +56,7 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
     });
 
     const { json: original } = res;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    res.json = <T = any>(): T => {
-      return unwrapTrpcResponse(original<T>());
-    };
+    res.json = <T = any>(): T => unwrapTrpcResponse(original<T>());
     return res;
   };
   fastify.decorate("injectTrpcQuery", injectTrpcQuery);
@@ -62,11 +65,16 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
     procedure: P,
     opts: InjectTrpcOptions<R, P> = {},
   ): Promise<LightMyRequestResponse> => {
-    const { input: json, headers: optionsHeaders, ...rest } = opts;
+    const { input, headers: optionsHeaders, ...rest } = opts;
 
     const params = new URLSearchParams([["batch", "1"]]);
-    if (json) {
-      params.set("input", JSON.stringify({ 0: { json } }));
+    if (input) {
+      params.set(
+        "input",
+        transformer
+          ? transformer.stringify({ 0: { json: input } })
+          : JSON.stringify({ 0: { json: input } }),
+      );
     }
     const headers = new Headers(Object.entries(defaultHeaders));
     const url = `${prefix}/${procedure}?${params.toString()}`;
@@ -78,10 +86,7 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
     });
 
     const { json: original } = res;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    res.json = <T = any>(): T => {
-      return unwrapBatchTrpcResponse(original<T>());
-    };
+    res.json = <T = any>(): T => unwrapBatchTrpcResponse(original<T>());
     return res;
   };
   fastify.decorate("injectTrpcBatchQuery", injectTrpcBatchQuery);
@@ -90,7 +95,7 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
     procedure: P,
     opts: InjectTrpcOptions<R, P> = {},
   ): Promise<LightMyRequestResponse> => {
-    const { input: json, headers: optionsHeaders, ...rest } = opts;
+    const { input, headers: optionsHeaders, ...rest } = opts;
 
     const params = new URLSearchParams([["batch", "1"]]);
     const headers = new Headers(Object.entries(defaultHeaders));
@@ -102,14 +107,11 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
       method: "POST",
       url,
       headers: exportHeaders(mergeHeaders(headers, optionsHeaders)),
-      body: { 0: transformer ? transformer.serialize(json) : JSON.stringify(json) },
+      body: transformer ? transformer.stringify({ 0: input }) : JSON.stringify({ 0: input }),
     });
 
     const { json: original } = res;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    res.json = <T = any>(): T => {
-      return unwrapBatchTrpcResponse(original<T>());
-    };
+    res.json = <T = any>(): T => unwrapBatchTrpcResponse(original<T>());
     return res;
   };
   fastify.decorate("injectTrpcMutation", injectTrpcMutation);
