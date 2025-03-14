@@ -43,7 +43,7 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
       // Serialize with transformer if provided, otherwise use JSON
       params.set(
         "input",
-        transformer ? transformer.stringify({ json: input }) : JSON.stringify({ json: input }),
+        transformer ? transformer.stringify(input) : JSON.stringify({ json: input }),
       );
     }
     const headers = new Headers(Object.entries(defaultHeaders));
@@ -72,7 +72,7 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
       params.set(
         "input",
         transformer
-          ? transformer.stringify({ 0: { json: input } })
+          ? JSON.stringify({ 0: transformer.stringify(input) })
           : JSON.stringify({ 0: { json: input } }),
       );
     }
