@@ -8,14 +8,19 @@ import {
   unwrapBatchTrpcResponse,
   unwrapTrpcResponse,
 } from "src/utils";
-import type { UnknownProcedures, inferProcedureInput, inferRouterProcedures } from "./types";
+import type {
+  JSONValue,
+  UnknownProcedures,
+  inferProcedureInput,
+  inferRouterProcedures,
+} from "./types";
 
 export type FastifyTrpcTestPluginOptions = {
   defaultHeaders?: Record<string, string>;
   transformer?: {
-    serialize: (data: any) => string;
-    stringify: (data: any) => string;
-    parse: (data: string) => any;
+    serialize(object: any): { json: JSONValue; meta?: Record<string, any> };
+    stringify(object: any): string;
+    parse<T = unknown>(string: string): T;
   };
   prefix?: string;
 };
@@ -73,7 +78,7 @@ const fastifyTrpcTestPlugin: FastifyPluginAsync<FastifyTrpcTestPluginOptions> = 
       params.set(
         "input",
         transformer
-          ? JSON.stringify({ 0: transformer.stringify(input) })
+          ? JSON.stringify({ 0: transformer.serialize(input) })
           : JSON.stringify({ 0: { json: input } }),
       );
     }
