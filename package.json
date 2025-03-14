@@ -1,6 +1,6 @@
 {
   "name": "@mgcrea/fastify-trpc-test-plugin",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "",
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "repository": "github:mgcrea/fastify-trpc-test-plugin",
